@@ -1,17 +1,17 @@
-import { GoogleGenerativeAI, Schema, SchemaType } from "@google/generative-ai";
+import Groq from "groq-sdk";
 import { VerificationInsights, AIProvider } from "./types";
 
-export class GeminiVerificationProvider implements AIProvider {
-  private genAI: GoogleGenerativeAI;
+export class GroqVerificationProvider implements AIProvider {
+  private groq: Groq;
   private modelName: string;
 
   constructor() {
-    const apiKey = process.env.AI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      console.warn("AI_API_KEY is missing. AI verification will fail if invoked.");
+      console.warn("GROQ_API_KEY is missing. AI verification will fail if invoked.");
     }
-    this.genAI = new GoogleGenerativeAI(apiKey || "dummy_key");
-    this.modelName = process.env.AI_MODEL || "gemini-2.5-flash";
+    this.groq = new Groq({ apiKey: apiKey || "dummy_key" });
+    this.modelName = process.env.GROQ_VERIFICATION_MODEL || "llama-3.3-70b-versatile";
   }
 
   async verifyExpertSubmission(
@@ -19,61 +19,9 @@ export class GeminiVerificationProvider implements AIProvider {
     documents: unknown[],
     engagements: unknown[]
   ): Promise<VerificationInsights> {
-    if (!process.env.AI_API_KEY) {
-      throw new Error("AI_API_KEY is not configured in the environment variables.");
+    if (!process.env.GROQ_API_KEY) {
+      throw new Error("GROQ_API_KEY is not configured in the environment variables.");
     }
-
-    // Define the schema for structured JSON output
-    const documentFindingSchema: Schema = {
-      type: SchemaType.OBJECT,
-      properties: {
-        document: { type: SchemaType.STRING, description: "Name or type of the document" },
-        status: { 
-          type: SchemaType.STRING, 
-          description: "Status of finding. Must be CONSISTENT, INCONSISTENT, or UNVERIFIABLE" 
-        },
-        finding: { type: SchemaType.STRING, description: "Detailed explanation of the finding" }
-      },
-      required: ["document", "status", "finding"]
-    };
-
-    const verificationInsightsSchema: Schema = {
-      type: SchemaType.OBJECT,
-      properties: {
-        summary: { type: SchemaType.STRING, description: "Overall short verification summary" },
-        consistent: { type: SchemaType.BOOLEAN, description: "Whether the overall evidence is mostly consistent with the profile" },
-        confidence: { type: SchemaType.INTEGER, description: "AI Assessment Confidence from 0 to 100" },
-        missingInformation: { 
-          type: SchemaType.ARRAY, 
-          items: { type: SchemaType.STRING },
-          description: "List of information missing from documents that would be needed to fully verify" 
-        },
-        inconsistencies: { 
-          type: SchemaType.ARRAY, 
-          items: { type: SchemaType.STRING },
-          description: "List of inconsistencies found between documents and profile" 
-        },
-        documentFindings: { 
-          type: SchemaType.ARRAY, 
-          items: documentFindingSchema,
-          description: "Detailed findings per submitted document" 
-        },
-        requiresAdminReview: { 
-          type: SchemaType.BOOLEAN, 
-          description: "Set to true if there are inconsistencies or missing information requiring manual admin review" 
-        }
-      },
-      required: ["summary", "consistent", "confidence", "missingInformation", "inconsistencies", "documentFindings", "requiresAdminReview"]
-    };
-
-    const model = this.genAI.getGenerativeModel({
-      model: this.modelName,
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: verificationInsightsSchema,
-        temperature: 0.1,
-      }
-    });
 
     const prompt = `
 You are an expert credential verification assistant. Your task is to analyze an expert's submitted profile, their documents, and engagement history to generate verification insights for a human administrator. 
@@ -83,7 +31,23 @@ IMPORTANT RULES:
 2. Compare the Extracted Document Evidence against the Expert Profile.
 3. Identify inconsistencies (e.g. name mismatch, dates mismatch).
 4. Identify missing evidence (e.g. missing degrees, unverified claims).
-5. Output ONLY the requested structured JSON format.
+5. Output ONLY a strictly formatted JSON object matching this exact schema:
+
+{
+  "summary": "Overall short verification summary",
+  "consistent": true, // boolean (true if overall evidence is mostly consistent)
+  "confidence": 85, // integer 0-100
+  "missingInformation": ["List of missing information"],
+  "inconsistencies": ["List of inconsistencies found"],
+  "documentFindings": [
+    {
+      "document": "Name or type of document",
+      "status": "CONSISTENT | INCONSISTENT | UNVERIFIABLE",
+      "finding": "Detailed explanation of the finding"
+    }
+  ],
+  "requiresAdminReview": true // boolean (true if there are inconsistencies or missing info)
+}
 
 --- EXPERT PROFILE ---
 ${JSON.stringify(expertProfile, null, 2)}
@@ -96,25 +60,38 @@ ${JSON.stringify(engagements, null, 2)}
 `;
 
     try {
-      const result = await model.generateContent(prompt);
-      const responseText = result.response.text();
+      const response = await this.groq.chat.completions.create({
+        messages: [{ role: "user", content: prompt }],
+        model: this.modelName,
+        response_format: { type: "json_object" },
+        temperature: 0.1
+      });
+
+      const responseText = response.choices[0]?.message?.content;
+      if (!responseText) throw new Error("No response from Groq.");
+
+      const parsed = JSON.parse(responseText);
       
-      const insights = JSON.parse(responseText) as VerificationInsights;
-      return insights;
+      // Basic runtime validation
+      if (typeof parsed.summary !== 'string' || typeof parsed.consistent !== 'boolean' || typeof parsed.requiresAdminReview !== 'boolean' || !Array.isArray(parsed.documentFindings)) {
+        throw new Error("Invalid JSON structure returned by Groq.");
+      }
+      
+      return parsed as VerificationInsights;
     } catch (error) {
       console.error("AI Verification Error:", error);
-      throw new Error("Failed to process verification with AI provider.");
+      throw new Error("Failed to process verification with Groq.");
     }
   }
 }
 
 // Factory to get the configured provider
 export function getVerificationProvider(): AIProvider {
-  const providerType = process.env.AI_VERIFICATION_PROVIDER || 'gemini';
+  const providerType = process.env.AI_PROVIDER || 'groq';
   
-  if (providerType === 'gemini') {
-    return new GeminiVerificationProvider();
+  if (providerType === 'groq') {
+    return new GroqVerificationProvider();
   }
   
-  throw new Error(`Unsupported AI_VERIFICATION_PROVIDER: ${providerType}`);
+  throw new Error(`Unsupported AI_PROVIDER: ${providerType}`);
 }

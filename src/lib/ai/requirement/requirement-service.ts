@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI, Schema, SchemaType } from "@google/generative-ai";
+import Groq from "groq-sdk";
 
 export interface StructuredRequirement {
   programType: string;
@@ -12,67 +12,86 @@ export interface StructuredRequirement {
   specialRequirements: string[];
 }
 
-export class GeminiRequirementProvider {
-  private genAI: GoogleGenerativeAI;
+export interface AIProvider {
+  analyzeRequirementText(text: string): Promise<StructuredRequirement>;
+}
+
+export class GroqRequirementProvider implements AIProvider {
+  private groq: Groq;
   private modelName: string;
 
   constructor() {
-    const apiKey = process.env.AI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      console.warn("AI_API_KEY is missing. Requirement analysis will fail if invoked.");
+      console.warn("GROQ_API_KEY is missing. AI requirement analysis will fail if invoked.");
     }
-    this.genAI = new GoogleGenerativeAI(apiKey || "dummy_key");
-    this.modelName = process.env.AI_MODEL || "gemini-2.5-flash";
+    // We instantiate even without key so the constructor doesn't throw instantly, but runtime calls will fail.
+    this.groq = new Groq({ apiKey: apiKey || "dummy_key" });
+    this.modelName = process.env.GROQ_REQUIREMENT_MODEL || "llama-3.1-8b-instant";
   }
 
   async analyzeRequirementText(text: string): Promise<StructuredRequirement> {
-    if (!process.env.AI_API_KEY) {
-      throw new Error("AI_API_KEY is not configured.");
+    if (!process.env.GROQ_API_KEY) {
+      throw new Error("GROQ_API_KEY is not configured in the environment variables.");
     }
-
-    const requirementSchema: Schema = {
-      type: SchemaType.OBJECT,
-      properties: {
-        programType: { type: SchemaType.STRING, description: "Type of program (e.g. Workshop, Guest Lecture, Panel Discussion)" },
-        domain: { type: SchemaType.STRING, description: "Primary domain or topic of the requirement" },
-        subDomains: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Specific sub-domains or topics" },
-        audience: { type: SchemaType.STRING, nullable: true, description: "Target audience (e.g., Final Year Students, Faculty)" },
-        requiredExperienceYears: { type: SchemaType.INTEGER, nullable: true, description: "Minimum years of experience required" },
-        mode: { type: SchemaType.STRING, nullable: true, description: "Delivery mode (e.g., Online, Offline, Both)" },
-        location: { type: SchemaType.STRING, nullable: true, description: "Location of the engagement, if offline" },
-        duration: { type: SchemaType.STRING, nullable: true, description: "Expected duration (e.g., 2 hours, 1 day)" },
-        specialRequirements: { type: SchemaType.ARRAY, items: { type: SchemaType.STRING }, description: "Any other special requirements or constraints" }
-      },
-      required: ["programType", "domain", "subDomains", "specialRequirements"]
-    };
-
-    const model = this.genAI.getGenerativeModel({
-      model: this.modelName,
-      generationConfig: {
-        responseMimeType: "application/json",
-        responseSchema: requirementSchema,
-        temperature: 0.1,
-      }
-    });
 
     const prompt = `
 You are an expert requirement analyst for an educational institution platform.
 Extract the structured requirement details from the provided document text.
-If information is missing, use null or empty array. Do not hallucinate missing information.
+If information is missing, use null or an empty array. Do not hallucinate missing information.
+
+You must reply with ONLY a strictly formatted JSON object that matches this exact schema structure:
+{
+  "programType": "string (e.g. Workshop, Guest Lecture)",
+  "domain": "string (Primary domain)",
+  "subDomains": ["string", "string"],
+  "audience": "string or null",
+  "requiredExperienceYears": 5, // number or null
+  "mode": "string or null",
+  "location": "string or null",
+  "duration": "string or null",
+  "specialRequirements": ["string"]
+}
 
 --- DOCUMENT TEXT ---
 ${text}
 `;
 
     try {
-      const result = await model.generateContent(prompt);
-      const responseText = result.response.text();
-      return JSON.parse(responseText) as StructuredRequirement;
+      const response = await this.groq.chat.completions.create({
+        messages: [{ role: "user", content: prompt }],
+        model: this.modelName,
+        response_format: { type: "json_object" },
+        temperature: 0.1
+      });
+
+      const responseText = response.choices[0]?.message?.content;
+      if (!responseText) throw new Error("No response from Groq.");
+
+      const parsed = JSON.parse(responseText);
+      
+      // Basic runtime validation
+      if (!parsed.programType || !parsed.domain || !Array.isArray(parsed.subDomains) || !Array.isArray(parsed.specialRequirements)) {
+        throw new Error("Invalid JSON structure returned by Groq.");
+      }
+      
+      return parsed as StructuredRequirement;
     } catch (error) {
       console.error("AI Requirement Analysis Error:", error);
-      throw new Error("Failed to analyze requirement document.");
+      throw new Error("Failed to analyze requirement document with Groq.");
     }
   }
 }
 
-export const requirementService = new GeminiRequirementProvider();
+// Factory to get the configured provider
+export function getRequirementProvider(): AIProvider {
+  const providerType = process.env.AI_PROVIDER || 'groq';
+  
+  if (providerType === 'groq') {
+    return new GroqRequirementProvider();
+  }
+  
+  throw new Error(`Unsupported AI_PROVIDER: ${providerType}`);
+}
+
+export const requirementService = getRequirementProvider();
