@@ -1,0 +1,266 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            String          @id @default(uuid())
+  name          String?
+  email         String          @unique
+  passwordHash  String
+  role          String          // EXPERT, INSTITUTION, ADMIN
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  expertProfile ExpertProfile?
+  institution   Institution?
+  notifications Notification[]
+  auditLogs     AuditLog[]
+}
+
+model ExpertProfile {
+  id                 String               @id @default(uuid())
+  userId             String               @unique
+  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName           String?
+  designation        String?
+  organization       String?
+  bio                String?
+  phone              String?
+  location           String?
+  linkedinUrl        String?
+  yearsExperience    Int?
+  verificationStatus String               @default("DRAFT")
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+
+  expertTags         ExpertTag[]
+  engagements        ExpertEngagement[]
+  verifications      Verification[]
+  references         InstitutionReference[]
+  availability       Availability[]
+  engagementRequests EngagementRequest[]
+  confirmedEngagements Engagement[]
+  documents          VerificationDocument[]
+  recommendations    RequirementRecommendation[]
+}
+
+model Institution {
+  id            String        @id @default(uuid())
+  userId        String        @unique
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  type          String?
+  location      String?
+  website       String?
+  description   String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  requirements  InstitutionRequirement[]
+  requests      EngagementRequest[]
+  engagements   Engagement[]
+}
+
+model ExpertiseCategory {
+  id          String         @id @default(uuid())
+  name        String         @unique
+  description String?
+  tags        ExpertiseTag[]
+}
+
+model ExpertiseTag {
+  id          String             @id @default(uuid())
+  name        String             @unique
+  categoryId  String
+  category    ExpertiseCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  expertTags  ExpertTag[]
+}
+
+model ExpertTag {
+  expertId  String
+  expert    ExpertProfile @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  tagId     String
+  tag       ExpertiseTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([expertId, tagId])
+}
+
+model ExpertEngagement {
+  id                 String             @id @default(uuid())
+  expertId           String
+  expert             ExpertProfile      @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  institutionId      String?
+  institutionName    String?
+  title              String
+  programType        String
+  date               DateTime
+  duration           String?
+  role               String?
+  description        String?
+  verificationStatus String             @default("DRAFT")
+  createdAt          DateTime           @default(now())
+}
+
+model InstitutionRequirement {
+  id            String             @id @default(uuid())
+  institutionId String
+  institution   Institution        @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  domain        String
+  programType   String
+  preferredDate DateTime?
+  duration      String?
+  audience      String?
+  budget        String?
+  description   String?
+  status                String             @default("DRAFT")
+  sourceType            String?
+  sourceDocumentId      String?
+  structuredRequirement String?
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  requests              EngagementRequest[]
+  engagements           Engagement[]
+  recommendations       RequirementRecommendation[]
+}
+
+model EngagementRequest {
+  id            String                 @id @default(uuid())
+  requirementId String
+  requirement   InstitutionRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  expertId      String
+  expert        ExpertProfile          @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  institutionId String
+  institution   Institution            @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  status        String                 @default("PENDING")
+  message       String?
+  requestedAt   DateTime               @default(now())
+  respondedAt   DateTime?
+
+  engagement    Engagement?
+}
+
+model Engagement {
+  id            String                 @id @default(uuid())
+  requestId     String                 @unique
+  request       EngagementRequest      @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  expertId      String
+  expert        ExpertProfile          @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  institutionId String
+  institution   Institution            @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  requirementId String
+  requirement   InstitutionRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  confirmedAt   DateTime               @default(now())
+  status        String                 @default("CONFIRMED")
+  notes         String?
+}
+
+model Verification {
+  id           String             @id @default(uuid())
+  expertId     String
+  expert       ExpertProfile      @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  status             String             @default("SUBMITTED")
+  submittedAt        DateTime           @default(now())
+  reviewedAt         DateTime?
+  reviewedBy         String? // Admin userId
+  decision           String?
+  adminNotes         String?
+
+  aiSummary          String?
+  aiConsistent       Boolean?
+  aiMissingInfo      String?
+  aiInconsistencies  String?
+  aiDocumentFindings String?
+  aiConfidence       Int?
+  aiProcessedAt      DateTime?
+
+  documents          VerificationDocument[]
+}
+
+model VerificationDocument {
+  id             String             @id @default(uuid())
+  verificationId String?
+  verification   Verification?      @relation(fields: [verificationId], references: [id], onDelete: SetNull)
+  expertId       String
+  expert         ExpertProfile      @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  documentType   String
+  fileName       String
+  storagePath    String
+  mimeType       String
+  fileSize       Int
+  status         String             @default("PENDING")
+  uploadedAt     DateTime           @default(now())
+  reviewedAt     DateTime?
+  reviewedBy     String? // Admin userId
+  reviewNotes    String?
+}
+
+model InstitutionReference {
+  id                    String         @id @default(uuid())
+  expertId              String
+  expert                ExpertProfile  @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  institutionName       String
+  contactName           String
+  contactEmail          String
+  engagementDescription String?
+  contactStatus         String         @default("PENDING")
+  verificationOutcome   String?
+  feedback              String?
+  contactedAt           DateTime?
+  verifiedAt            DateTime?
+  notes                 String?
+}
+
+model Availability {
+  id        String        @id @default(uuid())
+  expertId  String
+  expert    ExpertProfile @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  date      DateTime
+  startTime String?
+  endTime   String?
+  status    String        @default("AVAILABLE")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorUserId String
+  user        User     @relation(fields: [actorUserId], references: [id], onDelete: Cascade)
+  action      String
+  entityType  String
+  entityId    String
+  metadata    String?
+  createdAt   DateTime @default(now())
+}
+
+model RequirementRecommendation {
+  id                 String                 @id @default(uuid())
+  requirementId      String
+  requirement        InstitutionRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  expertId           String
+  expert             ExpertProfile          @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  matchScore         Int
+  domainScore        Int
+  suitabilityScore   Int
+  availabilityScore  Int
+  experienceScore    Int
+  explanation        String
+  createdAt          DateTime               @default(now())
+  
+  @@unique([requirementId, expertId])
+}
