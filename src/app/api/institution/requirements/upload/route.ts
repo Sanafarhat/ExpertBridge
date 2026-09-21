@@ -4,7 +4,8 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { requirementService } from '@/lib/ai/requirement/requirement-service'
-// pdf-parse import removed here for dynamic import
+
+
 
 export async function POST(request: Request) {
   try {
@@ -33,17 +34,21 @@ export async function POST(request: Request) {
     const arrayBuffer = await file.arrayBuffer()
     const buffer = Buffer.from(arrayBuffer)
 
-    // Extract text using pdf-parse
-    let extractedText = ''
+    // Extract text using pdf2json
+    let extractedText = '';
     try {
-      const pdfParseLib = await import('pdf-parse');
-      const parseModule = await import('pdf-parse');
-      const parseFunction = (parseModule as any).default || parseModule;
-      const pdfData = await (parseFunction as any)(buffer);
-      extractedText = pdfData.text
+      const PDFParser = require('pdf2json');
+      extractedText = await new Promise((resolve, reject) => {
+        const pdfParser = new PDFParser(null, 1);
+        pdfParser.on("pdfParser_dataError", (errData: any) => reject(errData.parserError));
+        pdfParser.on("pdfParser_dataReady", () => {
+          resolve(pdfParser.getRawTextContent());
+        });
+        pdfParser.parseBuffer(buffer);
+      });
     } catch (e) {
-      console.error('PDF Parse Error:', e)
-      return NextResponse.json({ error: 'Failed to extract text from PDF' }, { status: 400 })
+      console.error('PDF Parse Error:', e);
+      return NextResponse.json({ error: 'Failed to extract text from PDF' }, { status: 400 });
     }
 
     if (!extractedText || extractedText.trim().length === 0) {
@@ -67,7 +72,7 @@ export async function POST(request: Request) {
         sourceType: 'PDF_UPLOAD',
         sourceDocumentId: file.name, // Usually you'd store it in S3 and put the ID here.
         structuredRequirement: JSON.stringify(structuredRequirement),
-        status: 'SUBMITTED' 
+        status: 'SUBMITTED'
       }
     })
 
@@ -87,3 +92,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: (error as Error).message || 'Internal Server Error' }, { status: 500 })
   }
 }
+
+

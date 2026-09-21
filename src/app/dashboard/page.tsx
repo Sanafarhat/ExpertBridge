@@ -81,12 +81,15 @@ export default async function DashboardPage() {
     const totalRecommendations = institution.requirements.reduce((acc, req) => acc + req.recommendations.length, 0);
     const confirmedEngagements = institution.engagements.length;
 
-    const reqWithRecommendations = institution.requirements.find(r => r.recommendations.length > 0);
+    const reqWithRecommendations = institution.requirements.find(r => r.status === 'RECOMMENDATIONS_RELEASED');
     const latestRecommendations = reqWithRecommendations ? reqWithRecommendations.recommendations.slice(0, 3) : [];
 
     const getStatusBadge = (status: string) => {
       switch (status) {
         case 'SUBMITTED': return <span className="bg-[#4DA3FF]/10 text-[#4DA3FF] px-2.5 py-1 rounded-md text-xs font-bold tracking-wide uppercase">SUBMITTED</span>;
+        case 'UNDER_REVIEW': return <span className="bg-[#F6C85F]/20 text-[#D9A327] px-2.5 py-1 rounded-md text-xs font-bold tracking-wide uppercase">UNDER REVIEW</span>;
+        case 'RECOMMENDATIONS_READY': 
+        case 'RECOMMENDATIONS_RELEASED': return <span className="bg-[#6046D8]/10 text-[#6046D8] px-2.5 py-1 rounded-md text-xs font-bold tracking-wide uppercase">RECOMMENDATIONS READY</span>;
         case 'PROCESSING': return <span className="bg-[#6046D8]/10 text-[#6046D8] px-2.5 py-1 rounded-md text-xs font-bold tracking-wide uppercase">PROCESSING</span>;
         case 'MATCHED': return <span className="bg-[#2CBFAE]/10 text-[#2CBFAE] px-2.5 py-1 rounded-md text-xs font-bold tracking-wide uppercase">MATCHED</span>;
         case 'ENGAGEMENT_REQUESTED': return <span className="bg-[#F6C85F]/20 text-[#D9A327] px-2.5 py-1 rounded-md text-xs font-bold tracking-wide uppercase">REQUESTED</span>;
@@ -100,7 +103,7 @@ export default async function DashboardPage() {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-extrabold text-[#171942] tracking-tight">Good morning, {session.user.name}</h1>
-          <p className="text-[#666778] mt-1.5 text-lg">Manage your requirements, review expert recommendations, and track your engagements.</p>
+          <p className="text-[#666778] mt-1.5 text-lg">Manage your submitted requirements and review expert recommendations.</p>
         </div>
         
         {/* Statistics */}
@@ -269,6 +272,28 @@ export default async function DashboardPage() {
     )
   }
   if (role === 'ADMIN') {
+    const pendingVerificationsCount = await prisma.verification.count({ where: { status: 'SUBMITTED' } });
+    const underReviewCount = await prisma.verification.count({ where: { status: 'UNDER_REVIEW' } });
+    const verifiedExpertsCount = await prisma.expertProfile.count({ where: { verificationStatus: 'VERIFIED' } });
+    const referenceChecksCount = 0; // Reference checks not implemented yet
+    
+    const recentVerifications = await prisma.verification.findMany({
+      where: { status: { not: 'DRAFT' } },
+      include: {
+        expert: {
+          include: { expertTags: { include: { tag: true } } }
+        }
+      },
+      orderBy: { submittedAt: 'asc' },
+      take: 5
+    });
+
+    const pendingRequirements = await prisma.institutionRequirement.findMany({
+      where: { status: 'SUBMITTED' },
+      include: { institution: true },
+      orderBy: { createdAt: 'desc' }
+    });
+
     return (
       <div className="space-y-6">
         <h1 className="text-2xl font-bold text-slate-900">Admin Console</h1>
@@ -276,25 +301,28 @@ export default async function DashboardPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
             <h3 className="text-sm font-medium text-slate-500">Pending Verification</h3>
-            <p className="text-2xl font-bold text-amber-600 mt-2">2</p>
+            <p className="text-2xl font-bold text-amber-600 mt-2">{pendingVerificationsCount}</p>
           </div>
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
             <h3 className="text-sm font-medium text-slate-500">Under Review</h3>
-            <p className="text-2xl font-bold text-blue-600 mt-2">1</p>
+            <p className="text-2xl font-bold text-blue-600 mt-2">{underReviewCount}</p>
           </div>
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
             <h3 className="text-sm font-medium text-slate-500">Verified Experts</h3>
-            <p className="text-2xl font-bold text-green-600 mt-2">14</p>
+            <p className="text-2xl font-bold text-green-600 mt-2">{verifiedExpertsCount}</p>
           </div>
           <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
             <h3 className="text-sm font-medium text-slate-500">Reference Checks</h3>
-            <p className="text-2xl font-bold text-slate-900 mt-2">3</p>
+            <p className="text-2xl font-bold text-slate-900 mt-2">{referenceChecksCount}</p>
           </div>
         </div>
 
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-slate-200">
+          <div className="p-6 border-b border-slate-200 flex justify-between items-center">
             <h3 className="font-semibold text-slate-900">Verification Queue</h3>
+            <Link href="/dashboard/verification-queue" className="text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">
+              View All <ChevronRight className="w-4 h-4" />
+            </Link>
           </div>
           <div className="p-0">
              <table className="w-full text-sm text-left">
@@ -303,18 +331,73 @@ export default async function DashboardPage() {
                       <th className="px-6 py-3 font-medium">Expert</th>
                       <th className="px-6 py-3 font-medium">Domain</th>
                       <th className="px-6 py-3 font-medium">Submitted</th>
+                      <th className="px-6 py-3 font-medium">App ID</th>
                       <th className="px-6 py-3 font-medium">Stage</th>
-                      <th className="px-6 py-3 font-medium">Action</th>
+                      <th className="px-6 py-3 font-medium text-right">Action</th>
                    </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
+                   {recentVerifications.length > 0 ? recentVerifications.map(v => (
+                     <tr key={v.id}>
+                        <td className="px-6 py-4 font-medium text-slate-900">{v.expert.fullName}</td>
+                        <td className="px-6 py-4 text-slate-500">{v.expert.expertTags[0]?.tag.name || 'Not specified'}</td>
+                        <td className="px-6 py-4 text-slate-500">{v.submittedAt.toLocaleDateString()}</td>
+                        <td className="px-6 py-4 text-slate-500 font-mono text-xs" title="Application ID">{v.id.substring(0, 8)}</td>
+                        <td className="px-6 py-4"><span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium uppercase">{v.status}</span></td>
+                        <td className="px-6 py-4 text-right"><Link href="/dashboard/verification-queue" className="text-slate-400 hover:text-slate-600">View</Link></td>
+                     </tr>
+                   )) : (
+                     <tr><td colSpan={6} className="px-6 py-4 text-center text-slate-500">No pending verifications.</td></tr>
+                   )}
+                </tbody>
+             </table>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-6">
+          <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+            <h3 className="font-semibold text-slate-900">Pending Requirements for Review</h3>
+          </div>
+          <div className="overflow-x-auto">
+             <table className="w-full text-sm text-left">
+                <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
                    <tr>
-                      <td className="px-6 py-4 font-medium text-slate-900">Dr. Ananya Rao</td>
-                      <td className="px-6 py-4 text-slate-500">Technology Strategy</td>
-                      <td className="px-6 py-4 text-slate-500">Aug 20, 2026</td>
-                      <td className="px-6 py-4"><span className="bg-green-50 text-green-700 px-2 py-1 rounded text-xs font-medium">VERIFIED</span></td>
-                      <td className="px-6 py-4"><a href="#" className="text-slate-400 hover:text-slate-600">View</a></td>
+                      <th className="px-6 py-4 font-semibold">Institution</th>
+                      <th className="px-6 py-4 font-semibold">Requirement</th>
+                      <th className="px-6 py-4 font-semibold">Date</th>
+                      <th className="px-6 py-4 font-semibold">Status</th>
+                      <th className="px-6 py-4 font-semibold text-right">Action</th>
                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {pendingRequirements.length > 0 ? (
+                    pendingRequirements.map(req => (
+                     <tr key={req.id} className="hover:bg-slate-50">
+                        <td className="px-6 py-4 font-medium text-slate-900">{req.institution?.name || 'Unknown Institution'}</td>
+                        <td className="px-6 py-4">
+                          <p className="font-medium text-slate-900">{req.programType}</p>
+                          <p className="text-xs text-slate-500">{req.domain}</p>
+                        </td>
+                        <td className="px-6 py-4 text-slate-500">
+                          {req.createdAt.toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="bg-[#4DA3FF]/10 text-[#4DA3FF] px-2.5 py-1 rounded-md text-xs font-bold tracking-wide uppercase">{req.status}</span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <Link href={`/dashboard/admin/requirements/${req.id}`} className="text-sm font-medium text-blue-600 hover:text-blue-800">
+                            Review & Match
+                          </Link>
+                        </td>
+                     </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="px-6 py-8 text-center text-slate-500">
+                        No pending requirements to review.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
              </table>
           </div>

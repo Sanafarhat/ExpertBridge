@@ -43,7 +43,7 @@ export async function calculateMatches(requirementId: string) {
   const scoredExperts = verifiedExperts.map(expert => {
     let domainScore = 0
     let programScore = 0
-    let availabilityScore = 15 // Default to max for MVP if no strict date
+    let availabilityScore = 0 // Fixed: Explicitly missing by default
     let expScore = 0
     const explanationParts: string[] = []
 
@@ -92,11 +92,12 @@ export async function calculateMatches(requirementId: string) {
         availabilityScore = 0
         explanationParts.push('Explicitly unavailable on the requested date.')
       } else {
-        availabilityScore = 10
-        explanationParts.push('Availability needs to be confirmed.')
+        availabilityScore = 0
+        explanationParts.push('Availability unknown/missing.')
       }
     } else {
-      explanationParts.push('General availability assumed.')
+      availabilityScore = 0
+      explanationParts.push('Availability unknown/missing.')
     }
 
     // 4. Experience (Max 15)
@@ -114,6 +115,10 @@ export async function calculateMatches(requirementId: string) {
     }
 
     const totalScore = Math.round(domainScore + programScore + availabilityScore + expScore)
+
+
+    console.log(`[MATCH ENGINE] Scored Expert: ${expert.id} - ${expert.fullName}`);
+    console.log(`  -> Domain: ${domainScore}/40 | Program: ${programScore}/30 | Avail: ${availabilityScore}/15 | Exp: ${Math.round(expScore)}/15 = Total: ${totalScore}%`);
 
     return {
       expertId: expert.id,

@@ -58,6 +58,9 @@ export default function SidebarNav({ role }: { role: string }) {
           <Link href="/dashboard/verification-queue" className={getLinkClasses('/dashboard/verification-queue')}>
              <ClipboardList className="w-4 h-4" /> Verification Queue
           </Link>
+          <Link href="/dashboard" className={getLinkClasses('/dashboard')}>
+             <FileText className="w-4 h-4" /> Requirements
+          </Link>
           <Link href="/dashboard/institutions" className={getLinkClasses('/dashboard/institutions')}>
              <Users className="w-4 h-4" /> Institutions
           </Link>

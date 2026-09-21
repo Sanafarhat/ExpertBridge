@@ -25,8 +25,16 @@ export default async function MatchesPage({ params }: { params: any }) {
     return <div className="p-8 text-center">Requirement not found or unauthorized.</div>
   }
 
-  // Ensure recommendations are generated
-  await calculateMatches(id)
+  if (requirement.status !== 'RECOMMENDATIONS_RELEASED') {
+    return (
+      <div className="max-w-5xl mx-auto py-12 text-center">
+        <h2 className="text-2xl font-bold text-slate-900 mb-4">Recommendations Not Ready</h2>
+        <p className="text-slate-600 mb-8">Your requirement is currently under review. We will notify you once expert recommendations have been released.</p>
+        <Link href="/dashboard" className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">Back to Dashboard</Link>
+      </div>
+    )
+  }
+
 
   // Fetch the recommendations
   const matches = await prisma.requirementRecommendation.findMany({

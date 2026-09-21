@@ -59,6 +59,8 @@ export default async function VerificationQueuePage() {
           <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
             <tr>
               <th className="px-6 py-4 font-medium">Expert</th>
+              <th className="px-6 py-4 font-medium">App ID</th>
+              <th className="px-6 py-4 font-medium">Profile ID</th>
               <th className="px-6 py-4 font-medium">Primary Domain</th>
               <th className="px-6 py-4 font-medium">Submitted Date</th>
               <th className="px-6 py-4 font-medium">Docs</th>
@@ -78,6 +80,12 @@ export default async function VerificationQueuePage() {
                 <td className="px-6 py-4">
                   <div className="font-medium text-slate-900">{v.expert.fullName}</div>
                   <div className="text-slate-500 text-xs">{v.expert.designation} at {v.expert.organization}</div>
+                </td>
+                <td className="px-6 py-4 text-slate-600 font-mono text-xs" title="Verification Application ID">
+                  {v.id.substring(0, 8)}
+                </td>
+                <td className="px-6 py-4 text-slate-600 font-mono text-xs" title="Expert Profile ID">
+                  {v.expertId.substring(0, 8)}
                 </td>
                 <td className="px-6 py-4 text-slate-600">
                   {v.expert.expertTags[0]?.tag.name || 'Not specified'}

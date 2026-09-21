@@ -65,7 +65,7 @@ export default function RequirementForm({}: { categories: unknown[] }) {
       }
       
       // Redirect to the matching page
-      router.push(`/dashboard/requirements/${requirementId}/matches`)
+      router.push('/dashboard')
     } catch (err) {
       console.error('Submit error:', err)
       setError((err as Error).message || 'Failed to submit requirement')
@@ -259,9 +259,9 @@ export default function RequirementForm({}: { categories: unknown[] }) {
            <button
              onClick={handleSubmit}
              disabled={isSubmitting}
-             className="px-8 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center gap-2 transition-colors shadow-sm"
+             className="px-8 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 transition-colors shadow-sm"
            >
-             {isSubmitting ? 'Searching...' : 'Find Matching Experts'} <CheckCircle2 className="w-4 h-4" />
+             {isSubmitting ? 'Submitting...' : 'Submit Requirement'} <CheckCircle2 className="w-4 h-4" />
            </button>
          )}
       </div>
@@ -278,7 +278,7 @@ export default function RequirementForm({}: { categories: unknown[] }) {
           </div>
           <h2 className="text-xl font-bold text-slate-900 mb-2">Upload Requirement PDF</h2>
           <p className="text-slate-500 mb-8 max-w-md">
-            Our AI will automatically extract the topic, duration, audience, and other requirements from your document to find the perfect expert.
+            Our AI will automatically extract the topic, duration, audience, and other requirements from your document and submit it for admin review.
           </p>
           
           <label className="cursor-pointer">
@@ -304,7 +304,7 @@ export default function RequirementForm({}: { categories: unknown[] }) {
             disabled={!pdfFile || isSubmitting}
             className="mt-8 px-8 py-3 font-medium text-white bg-blue-600 rounded-full hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2 transition-colors"
           >
-            {isSubmitting ? 'Analyzing Document & Searching...' : 'Analyze & Find Experts'} <CheckCircle2 className="w-5 h-5" />
+            {isSubmitting ? 'Analyzing & Submitting...' : 'Submit Requirement'} <CheckCircle2 className="w-5 h-5" />
           </button>
         </div>
       )}
