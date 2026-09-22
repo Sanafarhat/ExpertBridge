@@ -54,12 +54,7 @@ export default function LoginPage() {
         <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900">
           Sign in to your account
         </h2>
-        <p className="mt-2 text-center text-sm text-slate-600">
-          Or{' '}
-          <Link href="/register" className="font-medium text-accent hover:text-accent-light">
-            create a new account
-          </Link>
-        </p>
+        
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
@@ -126,14 +121,21 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div>
+            <div className="flex flex-col gap-3">
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-accent hover:bg-accent-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50"
+                className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-accent hover:bg-accent-light focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent disabled:opacity-50 transition-colors"
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign in'}
               </button>
+              
+              <Link
+                href="/register"
+                className="w-full flex justify-center py-2.5 px-4 border-2 border-slate-200 rounded-full shadow-sm text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-200 transition-colors"
+              >
+                New to ExpertBridge? Register Now
+              </Link>
             </div>
           </form>
 
