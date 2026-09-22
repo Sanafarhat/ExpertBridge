@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
     // Save files
     const documentKeys = ['idProof', 'educationProof', 'employmentProof', 'certificationProof'];
-    const savedDocs = [];
+    const savedDocs: any[] = [];
     
     const uploadDir = path.join(process.cwd(), 'uploads', 'verifications');
     await mkdir(uploadDir, { recursive: true });
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create User
       const user = await tx.user.create({
-        data: { name, email, password: hashedPassword, role: 'EXPERT' }
+        data: { name, email, passwordHash: hashedPassword, role: 'EXPERT' }
       });
 
       // 2. Create ExpertProfile
@@ -78,14 +78,14 @@ export async function POST(req: NextRequest) {
           userId: user.id,
           fullName: name,
           designation: designation || 'Expert',
-          currentOrganization: organization || 'Independent',
+          organization: organization || 'Independent',
           bio,
           linkedinUrl: linkedin,
           location,
-          yearsOfExperience: experienceYears,
-          availability: availabilityStatus,
+          yearsExperience: experienceYears,
+          
           verificationStatus: 'SUBMITTED', // Will be updated by AI pipeline
-          engagementPreferences: preferredEngagementTypes,
+          
         }
       });
 

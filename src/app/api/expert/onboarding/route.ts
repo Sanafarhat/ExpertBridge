@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
           // Limit length to avoid max tokens issues (e.g. 5000 chars per doc)
           content = content.substring(0, 5000);
         } catch (e) {
-          console.error(\Failed to parse PDF \:\, e);
+          console.error('Failed to parse PDF:', e);
           content = 'Error extracting text from PDF';
         }
       } else {
@@ -70,8 +70,8 @@ export async function POST(req: NextRequest) {
     const profileForAi = {
       name: verification.expert.fullName,
       designation: verification.expert.designation,
-      organization: verification.expert.currentOrganization,
-      experienceYears: verification.expert.yearsOfExperience,
+      organization: verification.expert.organization,
+      experienceYears: verification.expert.yearsExperience,
       domain: verification.expert.expertTags.map(t => t.tag.name).join(', ')
     };
 
