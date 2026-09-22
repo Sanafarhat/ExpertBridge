@@ -143,18 +143,7 @@ export async function POST(req: NextRequest) {
       return { user, expertProfile, verification };
     });
 
-    // We do NOT block the response on AI verification to prevent timeouts,
-    // we trigger the AI pipeline endpoint async (or run it immediately and wait, 
-    // but running it sync might exceed Vercel/NextJS route limits if it takes 30s. 
-    // For local dev MVP, we can fetch the local API endpoint to trigger it).
     
-    // Fire and forget AI onboarding trigger
-    const baseUrl = req.headers.get('origin') || 'http://localhost:3000';
-    fetch(`${baseUrl}/api/expert/onboarding`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ verificationId: result.verification.id })
-    }).catch(e => console.error("Failed to trigger async AI verification:", e));
 
     return NextResponse.json({ 
       success: true, 

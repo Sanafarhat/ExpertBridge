@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Play, CheckCircle2, Search } from 'lucide-react'
+import { Play, CheckCircle2, Search, Send } from 'lucide-react'
 
 export default function AdminMatchActions({ requirementId, status, hasMatches }: { requirementId: string, status: string, hasMatches: boolean }) {
   const router = useRouter()
   const [isGenerating, setIsGenerating] = useState(false)
-  const [isReleasing, setIsReleasing] = useState(false)
+  const [isContacting, setIsContacting] = useState(false)
 
   const handleGenerate = async () => {
     try {
@@ -23,17 +23,18 @@ export default function AdminMatchActions({ requirementId, status, hasMatches }:
     }
   }
 
-  const handleRelease = async () => {
+  const handleContact = async () => {
     try {
-      setIsReleasing(true)
-      const res = await fetch(`/api/admin/requirements/${requirementId}/release`, { method: 'POST' })
-      if (!res.ok) throw new Error('Failed to release matches')
+      setIsContacting(true)
+      const res = await fetch(`/api/admin/requirements/${requirementId}/contact`, { method: 'POST' })
+      if (!res.ok) throw new Error('Failed to contact primary expert')
+      alert('Primary expert has been contacted successfully.')
       router.refresh()
     } catch (e) {
       console.error(e)
-      alert('Error releasing matches')
+      alert('Error contacting expert')
     } finally {
-      setIsReleasing(false)
+      setIsContacting(false)
     }
   }
 
@@ -56,17 +57,17 @@ export default function AdminMatchActions({ requirementId, status, hasMatches }:
         </>
       ) : status === 'RECOMMENDATIONS_READY' ? (
         <>
-          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-green-600 mb-2">
-            <CheckCircle2 className="w-6 h-6" />
+          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-amber-600 mb-2">
+            <Send className="w-6 h-6" />
           </div>
-          <h3 className="font-bold text-slate-900">Matches Generated</h3>
-          <p className="text-sm text-slate-600 max-w-md">Review the exact scores below. Once satisfied, release them to the institution.</p>
+          <h3 className="font-bold text-slate-900">Assign Roles & Contact Primary</h3>
+          <p className="text-sm text-slate-600 max-w-md">Assign Primary and Waitlist roles below, then contact the primary candidate.</p>
           <button 
-            onClick={handleRelease}
-            disabled={isReleasing}
-            className="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
+            onClick={handleContact}
+            disabled={isContacting}
+            className="px-6 py-2.5 bg-[#6046D8] hover:bg-[#4d38ad] text-white rounded-lg font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
           >
-            {isReleasing ? 'Releasing...' : 'Release to Institution'} <CheckCircle2 className="w-4 h-4" />
+            {isContacting ? 'Contacting...' : 'Contact Primary Expert'} <Send className="w-4 h-4" />
           </button>
         </>
       ) : (
@@ -74,8 +75,8 @@ export default function AdminMatchActions({ requirementId, status, hasMatches }:
           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-slate-400 mb-2">
             <CheckCircle2 className="w-6 h-6" />
           </div>
-          <h3 className="font-bold text-slate-900">Recommendations Released</h3>
-          <p className="text-sm text-slate-600 max-w-md">The institution can now view these recommendations.</p>
+          <h3 className="font-bold text-slate-900">Expert Contacted</h3>
+          <p className="text-sm text-slate-600 max-w-md">Engagement status is being tracked.</p>
         </>
       )}
     </div>

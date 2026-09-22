@@ -5,6 +5,7 @@ import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { ArrowLeft, CheckCircle2, Search, Play, FileText } from 'lucide-react'
 import AdminMatchActions from '@/components/dashboard/admin/admin-match-actions'
+import AdminAssignRoles from '@/components/dashboard/admin/admin-assign-roles'
 
 export default async function AdminRequirementPage({ params }: { params: any }) {
   const session = await getServerSession(authOptions)
@@ -100,9 +101,12 @@ export default async function AdminRequirementPage({ params }: { params: any }) 
                           <span className="font-mono bg-slate-100 px-2 py-0.5 rounded text-xs">ID: {match.expert.id}</span>
                         </div>
                       </div>
-                      <div className="flex flex-col items-end">
-                        <span className="text-2xl font-bold text-blue-600">{match.matchScore}%</span>
-                        <span className="text-xs uppercase font-bold text-slate-500 tracking-wider">Overall Match</span>
+                      <div className="flex flex-col items-end gap-4">
+                        <div className="flex flex-col items-end">
+                          <span className="text-2xl font-bold text-blue-600">{match.matchScore}%</span>
+                          <span className="text-xs uppercase font-bold text-slate-500 tracking-wider">Overall Match</span>
+                        </div>
+                        <AdminAssignRoles recommendationId={match.id} currentStatus={match.selectionStatus} currentContact={match.contactStatus} />
                       </div>
                     </div>
                     

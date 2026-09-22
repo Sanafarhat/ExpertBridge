@@ -33,7 +33,7 @@ export default async function DashboardPage() {
       return <div className="p-8">Profile not found.</div>
     }
 
-    const pendingRequests = profile.engagementRequests?.filter(r => r.status === 'PENDING').length || 0;
+    const pendingRequests = profile.engagementRequests?.filter((r: any) => r.status === 'PENDING').length || 0;
     const confirmedEngagements = profile.engagements?.length || 0;
     const isVerified = profile.verificationStatus === 'VERIFIED';
     
@@ -182,16 +182,16 @@ export default async function DashboardPage() {
               
               {profile.engagementRequests && profile.engagementRequests.length > 0 ? (
                 <div className="divide-y divide-slate-100">
-                  {profile.engagementRequests.map(req => (
-                    <div key={req.id} className="p-8 hover:bg-slate-50 transition-colors">
+                  {profile.engagementRequests.map((req: any) => (
+                    <div key={(req as any).id} className="p-8 hover:bg-slate-50 transition-colors">
                       {/* Note: In a real implementation, we would fetch the Institution and Requirement details */}
                       <div className="flex justify-between items-start mb-2">
                         <div>
-                          <h4 className="font-semibold text-slate-900">Request #{req.id.substring(0,8)}</h4>
-                          <p className="text-sm text-slate-500 mt-1">Status: {req.status}</p>
+                          <h4 className="font-semibold text-slate-900">Request #{(req as any).id.substring(0,8)}</h4>
+                          <p className="text-sm text-slate-500 mt-1">Status: {(req as any).status}</p>
                         </div>
                         <span className="px-3 py-1 bg-slate-100 text-slate-700 text-xs font-medium rounded-md uppercase">
-                          {req.status}
+                          {(req as any).status}
                         </span>
                       </div>
                       <Link href={`/dashboard/engagements`} className="inline-flex items-center gap-1.5 text-sm font-medium text-accent mt-4 hover:underline">
@@ -300,20 +300,25 @@ export default async function DashboardPage() {
 
   // INSTITUTION ROLE DASHBOARD
   if (role === 'INSTITUTION') {
-    const institution = await prisma.institution.findUnique({
+    const institution: any = await prisma.institution.findUnique({
       where: { userId: session.user.id },
       include: {
         requirements: {
           orderBy: { createdAt: 'desc' },
           include: {
-            recommendations: {
+            engagements: {
+              where: { status: 'CONFIRMED' },
               include: {
                 expert: true
               }
             }
           }
         },
-        engagements: true
+        engagements: true,
+        requests: {
+          include: { requirement: true, institution: true },
+          orderBy: { requestedAt: 'desc' }
+        }
       }
     });
 
@@ -321,12 +326,12 @@ export default async function DashboardPage() {
       return <div className="p-8">Please complete your institution profile.</div>
     }
 
-    const activeRequirements = institution.requirements.filter(r => r.status !== 'COMPLETED' && r.status !== 'CANCELLED');
-    const totalRecommendations = institution.requirements.reduce((acc, req) => acc + req.recommendations.length, 0);
+    const activeRequirements = institution.requirements.filter((r: any) => r.status !== 'COMPLETED' && r.status !== 'CANCELLED');
+    const totalRecommendations = institution.requirements.reduce((acc: any, req: any) => acc + req.engagements.length, 0);
     const confirmedEngagements = institution.engagements.length;
 
-    const reqWithRecommendations = institution.requirements.find(r => r.status === 'RECOMMENDATIONS_RELEASED');
-    const latestRecommendations = reqWithRecommendations ? reqWithRecommendations.recommendations.slice(0, 3) : [];
+    const reqWithRecommendations = institution.requirements.find((r: any) => r.status === 'RECOMMENDATIONS_RELEASED');
+    const latestRecommendations = reqWithRecommendations ? reqWithRecommendations.engagements.slice(0, 3) : [];
 
     const getStatusBadge = (status: string) => {
       switch (status) {
@@ -381,6 +386,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -389,21 +395,21 @@ export default async function DashboardPage() {
                 <Link href="/dashboard/requirements" className="text-sm font-medium text-[#6046D8] hover:underline">View All</Link>
               </div>
               <div className="divide-y divide-slate-100">
-                {institution.requirements.slice(0, 5).map((req) => (
-                  <div key={req.id} className="p-6 hover:bg-slate-50 transition">
+                {institution.requirements.slice(0, 5).map((req: any) => (
+                  <div key={(req as any).id} className="p-6 hover:bg-slate-50 transition">
                     <div className="flex justify-between items-start mb-3">
-                      <Link href={`/dashboard/requirements/${req.id}`} className="font-semibold text-slate-900 hover:text-[#6046D8] text-lg">
+                      <Link href={`/dashboard/requirements/${(req as any).id}`} className="font-semibold text-slate-900 hover:text-[#6046D8] text-lg">
                         {req.programType} in {req.domain}
                       </Link>
-                      {getStatusBadge(req.status)}
+                      {getStatusBadge((req as any).status)}
                     </div>
                     <div className="flex gap-4 text-sm text-slate-500 mb-4">
                       <span className="flex items-center gap-1"><UserCircle className="w-4 h-4"/> {req.domain}</span>
                       <span className="flex items-center gap-1"><Calendar className="w-4 h-4"/> {new Date(req.createdAt).toLocaleDateString()}</span>
                     </div>
-                    {req.status === 'RECOMMENDATIONS_RELEASED' && (
-                      <Link href={`/dashboard/requirements/${req.id}/matches`} className="inline-flex items-center gap-1 text-sm font-medium text-[#6046D8] hover:underline">
-                        View {req.recommendations.length} Recommendations <ArrowRight className="w-4 h-4" />
+                    {(req as any).status === 'RECOMMENDATIONS_RELEASED' && (
+                      <Link href={`/dashboard/requirements/${(req as any).id}/matches`} className="inline-flex items-center gap-1 text-sm font-medium text-[#6046D8] hover:underline">
+                        View {req.engagements.length} Recommendations <ArrowRight className="w-4 h-4" />
                       </Link>
                     )}
                   </div>
@@ -536,8 +542,8 @@ export default async function DashboardPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {pendingRequirements.length > 0 ? (
-                    pendingRequirements.map(req => (
-                     <tr key={req.id} className="hover:bg-slate-50">
+                    pendingRequirements.map((req: any) => (
+                     <tr key={(req as any).id} className="hover:bg-slate-50">
                         <td className="px-6 py-4 font-medium text-slate-900">{req.institution?.name || 'Unknown Institution'}</td>
                         <td className="px-6 py-4">
                           <p className="font-medium text-slate-900">{req.programType}</p>
@@ -547,10 +553,10 @@ export default async function DashboardPage() {
                           {req.createdAt.toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4">
-                          <span className="bg-[#4DA3FF]/10 text-[#4DA3FF] px-2.5 py-1 rounded-md text-xs font-bold tracking-wide uppercase">{req.status}</span>
+                          <span className="bg-[#4DA3FF]/10 text-[#4DA3FF] px-2.5 py-1 rounded-md text-xs font-bold tracking-wide uppercase">{(req as any).status}</span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <Link href={`/dashboard/admin/requirements/${req.id}`} className="text-sm font-medium text-blue-600 hover:text-blue-800">
+                          <Link href={`/dashboard/admin/requirements/${(req as any).id}`} className="text-sm font-medium text-blue-600 hover:text-blue-800">
                             Review & Match
                           </Link>
                         </td>

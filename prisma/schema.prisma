@@ -8,13 +8,13 @@ datasource db {
 }
 
 model User {
-  id            String          @id @default(uuid())
-  name          String?
-  email         String          @unique
-  passwordHash  String
-  role          String          // EXPERT, INSTITUTION, ADMIN
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id           String   @id @default(uuid())
+  name         String?
+  email        String   @unique
+  passwordHash String
+  role         String // EXPERT, INSTITUTION, ADMIN
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   expertProfile ExpertProfile?
   institution   Institution?
@@ -23,9 +23,9 @@ model User {
 }
 
 model ExpertProfile {
-  id                 String               @id @default(uuid())
-  userId             String               @unique
-  user               User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   fullName           String?
   designation        String?
   organization       String?
@@ -34,36 +34,36 @@ model ExpertProfile {
   location           String?
   linkedinUrl        String?
   yearsExperience    Int?
-  verificationStatus String               @default("DRAFT")
-  createdAt          DateTime             @default(now())
-  updatedAt          DateTime             @updatedAt
+  verificationStatus String   @default("DRAFT")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
-  expertTags         ExpertTag[]
-  engagements        ExpertEngagement[]
-  verifications      Verification[]
-  references         InstitutionReference[]
-  availability       Availability[]
-  engagementRequests EngagementRequest[]
+  expertTags           ExpertTag[]
+  engagements          ExpertEngagement[]
+  verifications        Verification[]
+  references           InstitutionReference[]
+  availability         Availability[]
+  engagementRequests   EngagementRequest[]
   confirmedEngagements Engagement[]
-  documents          VerificationDocument[]
-  recommendations    RequirementRecommendation[]
+  documents            VerificationDocument[]
+  recommendations      RequirementRecommendation[]
 }
 
 model Institution {
-  id            String        @id @default(uuid())
-  userId        String        @unique
-  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name          String
-  type          String?
-  location      String?
-  website       String?
-  description   String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  type        String?
+  location    String?
+  website     String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  requirements  InstitutionRequirement[]
-  requests      EngagementRequest[]
-  engagements   Engagement[]
+  requirements InstitutionRequirement[]
+  requests     EngagementRequest[]
+  engagements  Engagement[]
 }
 
 model ExpertiseCategory {
@@ -74,26 +74,26 @@ model ExpertiseCategory {
 }
 
 model ExpertiseTag {
-  id          String             @id @default(uuid())
-  name        String             @unique
-  categoryId  String
-  category    ExpertiseCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  expertTags  ExpertTag[]
+  id         String            @id @default(uuid())
+  name       String            @unique
+  categoryId String
+  category   ExpertiseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  expertTags ExpertTag[]
 }
 
 model ExpertTag {
-  expertId  String
-  expert    ExpertProfile @relation(fields: [expertId], references: [id], onDelete: Cascade)
-  tagId     String
-  tag       ExpertiseTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  expertId String
+  expert   ExpertProfile @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  tagId    String
+  tag      ExpertiseTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([expertId, tagId])
 }
 
 model ExpertEngagement {
-  id                 String             @id @default(uuid())
+  id                 String        @id @default(uuid())
   expertId           String
-  expert             ExpertProfile      @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  expert             ExpertProfile @relation(fields: [expertId], references: [id], onDelete: Cascade)
   institutionId      String?
   institutionName    String?
   title              String
@@ -102,31 +102,31 @@ model ExpertEngagement {
   duration           String?
   role               String?
   description        String?
-  verificationStatus String             @default("DRAFT")
-  createdAt          DateTime           @default(now())
+  verificationStatus String        @default("DRAFT")
+  createdAt          DateTime      @default(now())
 }
 
 model InstitutionRequirement {
-  id            String             @id @default(uuid())
-  institutionId String
-  institution   Institution        @relation(fields: [institutionId], references: [id], onDelete: Cascade)
-  domain        String
-  programType   String
-  preferredDate DateTime?
-  duration      String?
-  audience      String?
-  budget        String?
-  description   String?
-  status                String             @default("DRAFT")
+  id                    String      @id @default(uuid())
+  institutionId         String
+  institution           Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  domain                String
+  programType           String
+  preferredDate         DateTime?
+  duration              String?
+  audience              String?
+  budget                String?
+  description           String?
+  status                String      @default("DRAFT")
   sourceType            String?
   sourceDocumentId      String?
   structuredRequirement String?
-  createdAt             DateTime           @default(now())
-  updatedAt             DateTime           @updatedAt
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
 
-  requests              EngagementRequest[]
-  engagements           Engagement[]
-  recommendations       RequirementRecommendation[]
+  requests        EngagementRequest[]
+  engagements     Engagement[]
+  recommendations RequirementRecommendation[]
 }
 
 model EngagementRequest {
@@ -142,7 +142,7 @@ model EngagementRequest {
   requestedAt   DateTime               @default(now())
   respondedAt   DateTime?
 
-  engagement    Engagement?
+  engagement Engagement?
 }
 
 model Engagement {
@@ -161,15 +161,15 @@ model Engagement {
 }
 
 model Verification {
-  id           String             @id @default(uuid())
-  expertId     String
-  expert       ExpertProfile      @relation(fields: [expertId], references: [id], onDelete: Cascade)
-  status             String             @default("SUBMITTED")
-  submittedAt        DateTime           @default(now())
-  reviewedAt         DateTime?
-  reviewedBy         String? // Admin userId
-  decision           String?
-  adminNotes         String?
+  id          String        @id @default(uuid())
+  expertId    String
+  expert      ExpertProfile @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  status      String        @default("SUBMITTED")
+  submittedAt DateTime      @default(now())
+  reviewedAt  DateTime?
+  reviewedBy  String? // Admin userId
+  decision    String?
+  adminNotes  String?
 
   aiSummary          String?
   aiConsistent       Boolean?
@@ -179,36 +179,36 @@ model Verification {
   aiConfidence       Int?
   aiProcessedAt      DateTime?
 
-  documents          VerificationDocument[]
+  documents VerificationDocument[]
 }
 
 model VerificationDocument {
-  id             String             @id @default(uuid())
+  id             String        @id @default(uuid())
   verificationId String?
-  verification   Verification?      @relation(fields: [verificationId], references: [id], onDelete: SetNull)
+  verification   Verification? @relation(fields: [verificationId], references: [id], onDelete: SetNull)
   expertId       String
-  expert         ExpertProfile      @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  expert         ExpertProfile @relation(fields: [expertId], references: [id], onDelete: Cascade)
   documentType   String
   fileName       String
   storagePath    String
   mimeType       String
   fileSize       Int
-  status         String             @default("PENDING")
-  uploadedAt     DateTime           @default(now())
+  status         String        @default("PENDING")
+  uploadedAt     DateTime      @default(now())
   reviewedAt     DateTime?
   reviewedBy     String? // Admin userId
   reviewNotes    String?
 }
 
 model InstitutionReference {
-  id                    String         @id @default(uuid())
+  id                    String        @id @default(uuid())
   expertId              String
-  expert                ExpertProfile  @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  expert                ExpertProfile @relation(fields: [expertId], references: [id], onDelete: Cascade)
   institutionName       String
   contactName           String
   contactEmail          String
   engagementDescription String?
-  contactStatus         String         @default("PENDING")
+  contactStatus         String        @default("PENDING")
   verificationOutcome   String?
   feedback              String?
   contactedAt           DateTime?
@@ -227,14 +227,14 @@ model Availability {
 }
 
 model Notification {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   message   String
   type      String
   readAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 }
 
 model AuditLog {
@@ -249,18 +249,20 @@ model AuditLog {
 }
 
 model RequirementRecommendation {
-  id                 String                 @id @default(uuid())
-  requirementId      String
-  requirement        InstitutionRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
-  expertId           String
-  expert             ExpertProfile          @relation(fields: [expertId], references: [id], onDelete: Cascade)
-  matchScore         Int
-  domainScore        Int
-  suitabilityScore   Int
-  availabilityScore  Int
-  experienceScore    Int
-  explanation        String
-  createdAt          DateTime               @default(now())
-  
+  id                String                 @id @default(uuid())
+  requirementId     String
+  requirement       InstitutionRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  expertId          String
+  expert            ExpertProfile          @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  matchScore        Int
+  domainScore       Int
+  suitabilityScore  Int
+  availabilityScore Int
+  experienceScore   Int
+  explanation       String
+  selectionStatus   String? // "PRIMARY", "WAITLIST_1", "WAITLIST_2"
+  contactStatus     String? // "PENDING", "CONTACTED", "DECLINED", "ACCEPTED"
+  createdAt         DateTime               @default(now())
+
   @@unique([requirementId, expertId])
 }

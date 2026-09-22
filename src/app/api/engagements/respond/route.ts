@@ -24,6 +24,17 @@ export async function POST(request: Request) {
 
     const status = action === 'ACCEPT' ? 'ACCEPTED' : 'DECLINED'
 
+    // Mark recommendation as responded
+    await prisma.requirementRecommendation.updateMany({
+      where: {
+        requirementId: engagementRequest.requirementId,
+        expertId: engagementRequest.expertId
+      },
+      data: {
+        contactStatus: status
+      }
+    })
+
     // Update the request
     await prisma.engagementRequest.update({
       where: { id: requestId },
