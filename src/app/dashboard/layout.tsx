@@ -24,9 +24,7 @@ export default async function DashboardLayout({
       <header className="sticky top-0 z-40 bg-primary text-white border-b border-primary">
         <div className="flex h-16 items-center px-4 md:px-6 justify-between">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent">
-              <ShieldCheck className="h-5 w-5 text-white" />
-            </div>
+            <img src="/logo.jpg" alt="ExpertBridge Logo" className="w-9 h-9 object-cover rounded-full shadow-sm" />
             <span className="text-xl font-bold tracking-tight text-white">ExpertBridge</span>
           </Link>
 

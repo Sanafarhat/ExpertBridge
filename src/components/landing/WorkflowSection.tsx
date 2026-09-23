@@ -95,7 +95,7 @@ export default function WorkflowSection() {
   };
 
   return (
-    <section className="py-24 bg-white" id="workflow">
+    <section id="how-it-works" className="py-24 bg-white">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-extrabold text-[#171942] mb-4">The ExpertBridge Workflow</h2>

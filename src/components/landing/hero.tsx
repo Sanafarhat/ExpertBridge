@@ -43,9 +43,9 @@ export default function Hero() {
             <Link href="/register" className="bg-[#171942] hover:bg-[#25265A] text-white px-8 py-4 rounded-full text-lg font-semibold transition-all hover:shadow-xl hover:-translate-y-1 flex items-center justify-center gap-2 w-full sm:w-auto">
               Submit a Requirement <ArrowRight className="w-5 h-5" />
             </Link>
-            <Link href="#how-it-works" className="bg-white hover:bg-gray-50 text-[#171942] border border-[#E7E6EF] shadow-sm px-8 py-4 rounded-full text-lg font-semibold transition-all hover:shadow-md hover:-translate-y-1 flex items-center justify-center w-full sm:w-auto">
+            <a href="#how-it-works" className="bg-white hover:bg-gray-50 text-[#171942] border border-[#E7E6EF] shadow-sm px-8 py-4 rounded-full text-lg font-semibold transition-all hover:shadow-md hover:-translate-y-1 flex items-center justify-center w-full sm:w-auto">
               See How It Works
-            </Link>
+            </a>
           </div>
         </motion.div>
 

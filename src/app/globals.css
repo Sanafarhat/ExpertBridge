@@ -34,3 +34,8 @@ body {
     border-color: #E7E6EF;
   }
 }
+
+
+html {
+  scroll-behavior: smooth;
+}

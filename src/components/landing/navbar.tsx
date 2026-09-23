@@ -15,17 +15,15 @@ export default function Navbar() {
         
         {/* Brand / Logo */}
         <Link href="/" className="flex items-center gap-2 group">
-          <div className="bg-[#6046D8] p-2 rounded-xl shadow-lg shadow-[#6046D8]/20 transition-transform group-hover:scale-105">
-            <ShieldCheck className="w-5 h-5 text-white" strokeWidth={2.5} />
-          </div>
+          <img src="/logo.jpg" alt="ExpertBridge Logo" className="w-10 h-10 object-cover rounded-full transition-transform group-hover:scale-105 shadow-sm" />
           <span className="text-xl md:text-2xl font-bold tracking-tight text-[#11132F]">ExpertBridge</span>
         </Link>
         
         {/* Desktop Links */}
         <div className="hidden lg:flex items-center gap-8 text-[15px] font-medium text-[#17182C]">
-          <Link href="#how-it-works" className="hover:text-[#6046D8] hover:bg-[#F2EEFF] px-3 py-1.5 rounded-lg transition-all duration-200">
+          <a href="#how-it-works" className="hover:text-[#6046D8] hover:bg-[#F2EEFF] px-3 py-1.5 rounded-lg transition-all duration-200">
             How It Works
-          </Link>
+          </a>
           <Link href="#institutions" className="hover:text-[#5865F2] hover:bg-[#EEF5FF] px-3 py-1.5 rounded-lg transition-all duration-200">
             For Institutions
           </Link>
@@ -62,9 +60,9 @@ export default function Navbar() {
       {/* Mobile Menu Overlay */}
       {isOpen && (
         <div className="lg:hidden absolute top-full left-0 w-full bg-white border-b border-[#E7E6EF] shadow-xl flex flex-col py-4 px-6 gap-2">
-          <Link href="#how-it-works" onClick={closeMenu} className="text-[#17182C] font-medium hover:text-[#6046D8] py-3 border-b border-gray-50">
+          <a href="#how-it-works" onClick={closeMenu} className="text-[#17182C] font-medium hover:text-[#6046D8] py-3 border-b border-gray-50">
             How It Works
-          </Link>
+          </a>
           <Link href="#institutions" onClick={closeMenu} className="text-[#17182C] font-medium hover:text-[#5865F2] py-3 border-b border-gray-50">
             For Institutions
           </Link>

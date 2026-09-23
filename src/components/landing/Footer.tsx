@@ -9,9 +9,7 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-start gap-12 mb-16">
           <div className="max-w-sm">
             <div className="flex items-center gap-2 mb-4">
-              <div className="bg-[#6046D8] p-1.5 rounded-lg">
-                <ShieldCheck className="w-6 h-6 text-white" />
-              </div>
+              <img src="/logo.jpg" alt="ExpertBridge Logo" className="w-9 h-9 object-cover rounded-full shadow-sm" />
               <span className="text-xl font-bold text-[#171942] tracking-tight">ExpertBridge</span>
             </div>
             <p className="text-[#666778] font-medium">

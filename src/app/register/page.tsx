@@ -7,9 +7,7 @@ export default function RegisterPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent shadow-md">
-              <ShieldCheck className="h-6 w-6 text-white" />
-            </div>
+            <img src="/logo.jpg" alt="ExpertBridge Logo" className="w-9 h-9 object-cover rounded-full shadow-sm" />
             <span className="text-2xl font-bold tracking-tight text-slate-900">ExpertBridge</span>
           </Link>
         </div>
